@@ -10,6 +10,7 @@ pipeline {
         stage('Clonage du projet') {
             steps {
                 script {
+                    sh 'rm -rf DEVOPS || true'  // Supprime le dossier sil existe
                     sh 'git clone $GITHUB_REPO'
                     sh 'ls -la DEVOPS' // Vérifie que le clonage a fonctionné
                 }
