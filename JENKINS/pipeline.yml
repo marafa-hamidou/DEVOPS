@@ -1,22 +1,44 @@
-pipeline:
-  agent any
-  
-  stages:
-    - stage: "Clonage"
-      steps:
-        - script:
-            git clone https://github.com/marafa-hamidou/DEVOPS.git
-            cd votre-repo
-    
-    - stage: "Image"
-      steps:
-        - script:
-            cd votre-repo
-            docker build -t marafa-flask-app .
-    
-    - stage: "Publication"
-      steps:
-        - script:
-            echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
-            docker tag marafa-flask-app marafa1234/docker-flask-app:latest
-            docker push marafa1234/docker-flask-app:latest
+pipeline {
+    agent any
+
+    environment {
+        DOCKER_HUB_CREDENTIALS = 'dockerhub-credentials'  // Remplace par l'ID de tes credentials DockerHub dans Jenkins
+        DOCKER_IMAGE = 'marafa1234/docker-flask-app:latest'
+        GIT_REPO = 'https://github.com/marafa-hamidou/DEVOPS' // Remplace par ton vrai dépôt GitHub
+    }
+
+    stages {
+        stage('Clonage') {
+            steps {
+                git branch: 'main', url: "${GIT_REPO}"
+            }
+        }
+
+        stage('Construction de l’image') {
+            steps {
+                script {
+                    sh 'docker build -t marafa-flask-app .'
+                }
+            }
+        }
+
+        stage('Authentification DockerHub') {
+            steps {
+                script {
+                    withCredentials([usernamePassword(credentialsId: "${DOCKER_HUB_CREDENTIALS}", usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                        sh 'echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin'
+                    }
+                }
+            }
+        }
+
+        stage('Tag et Push de l’image') {
+            steps {
+                script {
+                    sh 'docker tag marafa-flask-app ${DOCKER_IMAGE}'
+                    sh 'docker push ${DOCKER_IMAGE}'
+                }
+            }
+        }
+    }
+}
