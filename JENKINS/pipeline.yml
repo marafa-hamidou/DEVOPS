@@ -1,54 +1,22 @@
-pipeline {
-    agent any
-
-    environment {
-        DOCKER_IMAGE = "marafa1234/docker-flask-app"
-        GITHUB_REPO = "https://github.com/marafa-hamidou/DEVOPS"
-    }
-
-    stages {
-        stage('Clonage du projet') {
-            steps {
-                script {
-                    sh 'rm -rf DEVOPS || true'  // Supprime le dossier sil existe
-                    sh 'git clone $GITHUB_REPO'
-                    sh 'ls -la DEVOPS' // Vérifie que le clonage a fonctionné
-                }
-            }
-        }
-
-        stage('Fix permissions Docker') {
-            steps {
-                script {
-                    sh 'sudo chmod 666 /var/run/docker.sock'
-                }
-            }
-        }
-
-        stage('Construction de l\'image Docker') {
-            steps {
-                script {
-                    sh 'docker build -t $DOCKER_IMAGE DEVOPS/'
-                }
-            }
-        }
-
-        stage('Connexion à Docker Hub') {
-            steps {
-                script {
-                    withCredentials([string(credentialsId: 'docker-hub-password', variable: 'DOCKER_PASSWORD')]) {
-                        sh 'echo $DOCKER_PASSWORD | docker login -u marafa1234 --password-stdin'
-                    }
-                }
-            }
-        }
-
-        stage('Publication de l\'image') {
-            steps {
-                script {
-                    sh 'docker push $DOCKER_IMAGE'
-                }
-            }
-        }
-    }
-}
+pipeline:
+  agent any
+  
+  stages:
+    - stage: "Clonage"
+      steps:
+        - script:
+            git clone https://github.com/marafa-hamidou/DEVOPS.git
+            cd votre-repo
+    
+    - stage: "Image"
+      steps:
+        - script:
+            cd votre-repo
+            docker build -t marafa-flask-app .
+    
+    - stage: "Publication"
+      steps:
+        - script:
+            echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+            docker tag marafa-flask-app marafa1234/docker-flask-app:latest
+            docker push marafa1234/docker-flask-app:latest
